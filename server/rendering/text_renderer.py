@@ -51,22 +51,25 @@ class TextRenderer:
 
         temp_img = Image.new('RGB', (self.width, 100), 'white')
         draw = ImageDraw.Draw(temp_img)
-        lines, current_line = [], ""
-
-        for word in self.text.split():
-            parts = self._split_long_word(word, draw) if self._text_width(draw, word) > self.width else [word]
-            for part in parts:
-                test_line = current_line + (" " if current_line else "") + part
-                if self._text_width(draw, test_line) <= self.width:
-                    current_line = test_line
-                else:
-                    lines.append(current_line)
-                    current_line = part
-                    if self._limit_reached(len(lines) + 1):
-                        return self._truncate(lines, draw)
-
-        if current_line:
-            lines.append(current_line)
+        lines = []
+        # Split text by forced linebreaks first
+        for raw_line in self.text.split('\n'):
+            current_line = ""
+            for word in raw_line.split():
+                parts = self._split_long_word(word, draw) if self._text_width(draw, word) > self.width else [word]
+                for part in parts:
+                    test_line = current_line + (" " if current_line else "") + part
+                    if self._text_width(draw, test_line) <= self.width:
+                        current_line = test_line
+                    else:
+                        lines.append(current_line)
+                        current_line = part
+                        if self._limit_reached(len(lines) + 1):
+                            return self._truncate(lines, draw)
+            if current_line:
+                lines.append(current_line)
+            if self._limit_reached(len(lines)):
+                return self._truncate(lines, draw)
 
         while self._limit_reached(len(lines)):
             lines.pop()
